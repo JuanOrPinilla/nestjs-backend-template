@@ -1,19 +1,18 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
-    type: 'postgres',
-    host: 'localhost',
-    port: 5432,
-    username: 'postgres',
-    password: 'postgres',
-    database: 'museum',
+    type: process.env.TYPE as 'postgres',
+    host: process.env.HOST,
+    port: parseInt(process.env.PORT as string),
+    username: process.env.USERNAME,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE as string,
     entities: [],
-    dropSchema: true,
     synchronize: true,
   }),],
   controllers: [AppController],
