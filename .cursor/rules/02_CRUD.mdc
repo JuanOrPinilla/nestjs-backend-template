@@ -1,0 +1,219 @@
+---
+description: "Standards for service layer, CRUD operations, associations, and service testing in NestJS"
+alwaysApply: false
+---
+
+# Service Layer Rules
+
+## Service Definition
+
+- Each persistent domain entity **MUST** have exactly one primary service.
+- Service class names **MUST** follow the convention `<EntityName>Service`.
+- Services **MUST** be created using the NestJS CLI.
+- Services **MUST** be declared as injectable providers.
+
+### Required command
+
+nest g s <resource-name>
+
+### Required structure
+- `src/<resource-name>/<resource-name>.service.ts`
+
+---
+
+## Repository Injection
+
+- Every service **MUST** inject the repository of its corresponding entity.
+- Repository injection **MUST** be performed using `@InjectRepository`.
+- Services **MUST NOT** access the database directly.
+
+### Constructor requirements
+- Inject `Repository<Entity>` via constructor
+- Repository fields **MUST** be declared as `private readonly`
+
+---
+
+## Module Configuration for Services
+
+- Any module that injects a repository **MUST** import `TypeOrmModule.forFeature`.
+- All entities used by a service **MUST** be registered in the module imports.
+
+---
+
+## CRUD Method Standards
+
+### Required CRUD Methods
+
+Each entity service **MUST** implement the following asynchronous methods:
+
+- `findAll`
+- `findOne`
+- `create`
+- `update`
+- `delete`
+
+### General Rules
+
+- All service methods **MUST** be asynchronous.
+- All repository calls **MUST** use `await`.
+- Services **MUST** return domain entities, not DTOs.
+
+---
+
+## Retrieval Rules
+
+### findAll
+
+- `findAll` **MUST** return all persisted entities.
+- Related entities **MUST** be eagerly loaded using the `relations` option.
+- Returned value **MUST** be an array of entities.
+
+### findOne
+
+- `findOne` **MUST** retrieve an entity by identifier.
+- If the entity does not exist, the method **MUST** throw a business exception.
+- Related entities **MUST** be eagerly loaded when returning a detailed representation.
+
+---
+
+## Creation Rules
+
+- `create` **MUST** persist a new entity using the repository `save` method.
+- Business rules **MAY** be validated before persistence.
+- The persisted entity **MUST** be returned.
+
+---
+
+## Update Rules
+
+- `update` **MUST** verify the existence of the entity before updating.
+- If the entity does not exist, the method **MUST** throw a business exception.
+- Updates **MUST** preserve the entity identifier.
+- Persistence **MUST** be performed using the repository `save` method.
+
+---
+
+## Deletion Rules
+
+- `delete` **MUST** verify the existence of the entity before deletion.
+- If the entity does not exist, the method **MUST** throw a business exception.
+- Entities **MUST** be removed using the repository `remove` method.
+
+---
+
+## Business Error Handling
+
+### Shared Error Definitions
+
+- Business errors **MUST** be centralized under `src/shared/errors`.
+- A shared error enumeration **MUST** define error categories.
+- A shared business exception constructor **MUST** be used by all services.
+
+### Error Rules
+
+- Services **MUST** throw business exceptions for:
+  - Non-existent entities
+  - Invalid associations
+  - Precondition violations
+- Services **MUST NOT** throw HTTP exceptions directly.
+
+---
+
+## Association Service Rules
+
+### Association Services
+
+- Each entity association **MUST** have a dedicated service.
+- Association services **MUST** be named using the convention `<EntityA>-<EntityB>Service`.
+- Association services **MUST** inject repositories for all participating entities.
+
+### Required commands
+
+nest g mo <entityA>-<entityB>
+nest g s <entityA>-<entityB>
+
+---
+
+## Association Ownership Rules
+
+- In One-to-Many relationships, the entity with cardinality many **IS** the owner.
+- Association mutations **MUST** be performed through the owning entity.
+- Association services **MUST** persist changes via the owning entity repository.
+
+---
+
+## Association Service Responsibilities
+
+Association services **MUST** support the following operations:
+
+- Add a related entity to the owner
+- Retrieve a related entity by both identifiers
+- Retrieve all related entities for an owner
+- Replace all related entities for an owner
+- Remove a related entity from the owner
+
+---
+
+## Association Validation Rules
+
+- All participating entities **MUST** be validated for existence.
+- If a related entity is not associated, the service **MUST** throw a precondition error.
+- Partial updates of associations **MUST NOT** occur if validation fails.
+
+---
+
+## Testing Standards for Services
+
+### General Testing Rules
+
+- Every service **MUST** have a corresponding `.spec.ts` file.
+- Service tests **MUST** use an in-memory database.
+- Tests **MUST** run in isolation.
+
+---
+
+## TypeORM Testing Configuration
+
+- A shared TypeORM testing configuration **MUST** exist under:
+  - `src/shared/testing-utils`
+- The testing database **MUST**:
+  - Use SQLite in memory
+  - Drop schema before each test
+  - Synchronize entities automatically
+
+---
+
+## Test Data Seeding
+
+- Each service test suite **MUST** seed test data explicitly.
+- Repositories **MUST** be cleared before seeding.
+- Seeded data **MUST** be reusable across test cases.
+
+---
+
+## CRUD Test Coverage
+
+Each service test suite **MUST** include tests for:
+
+- Successful retrieval of all entities
+- Successful retrieval by identifier
+- Retrieval failure for non-existent entities
+- Successful creation
+- Successful update
+- Update failure for non-existent entities
+- Successful deletion
+- Deletion failure for non-existent entities
+
+---
+
+## Association Test Coverage
+
+Association service test suites **MUST** include tests for:
+
+- Adding associations
+- Retrieving associated entities
+- Retrieving all associations
+- Replacing associations
+- Removing associations
+- Invalid entity identifiers
+- Non-associated entity operations

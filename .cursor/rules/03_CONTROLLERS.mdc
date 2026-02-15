@@ -1,0 +1,217 @@
+---
+alwaysApply: true
+---
+
+# Controller Layer Rules
+
+## Controller Definition
+
+- Each API resource **MUST** have exactly one controller.
+- Controllers **MUST** represent the final API layer.
+- Controllers **MUST** be created using the NestJS CLI.
+- Controllers **MUST** be registered automatically in their corresponding module.
+- Controllers **MUST** be annotated with `@Controller()`.
+
+### Required command
+
+nest g co <resource-name> --no-spec
+
+---
+
+## Controller Routing
+
+- Each controller **MUST** define a base route using `@Controller('<resource-plural>')`.
+- Base routes **MUST** use pluralized resource names.
+- All endpoint routes **MUST** be relative to the controller base route.
+
+---
+
+## Service Injection
+
+- Each controller **MUST** inject exactly one primary service.
+- Services **MUST** be injected through the constructor.
+- Injected services **MUST** be declared as `private readonly`.
+
+---
+
+## Error Handling Interceptor
+
+### Interceptor Definition
+
+- All controllers **MUST** use a shared business error interceptor.
+- The interceptor **MUST** convert business errors into HTTP exceptions.
+- Error mapping **MUST** be centralized.
+
+### Required command
+
+nest g itc shared/interceptors/business-errors --no-spec
+
+### HTTP Status Mapping Rules
+
+- Business errors **MUST** be mapped to:
+  - `404 NOT_FOUND`
+  - `412 PRECONDITION_FAILED`
+  - `400 BAD_REQUEST`
+- Unknown errors **MUST** propagate without transformation.
+
+---
+
+## Interceptor Usage
+
+- Controllers **MUST** apply the business error interceptor using `@UseInterceptors`.
+- The interceptor **MUST** be applied at the controller class level.
+
+---
+
+## Data Transfer Objects (DTO)
+
+### DTO Definition
+
+- Each persistent entity **MUST** have a corresponding DTO.
+- DTO class names **MUST** end with the suffix `Dto`.
+- DTOs **MUST** be defined in the same module as the controller.
+- DTOs **MUST** be created using the NestJS CLI without test files.
+
+### Required command
+
+nest g cl <resource-name>/<resource-name>.dto --no-spec
+
+---
+
+## DTO Immutability
+
+- All DTO attributes **MUST** be declared as `readonly`.
+- DTOs **MUST NOT** contain business logic.
+
+---
+
+## DTO Validation
+
+- DTOs **MUST** use `class-validator` annotations.
+- Validation rules **MUST** enforce:
+  - Required fields
+  - Correct data types
+  - Format constraints where applicable
+- Validation **MUST** be enabled globally using `ValidationPipe`.
+
+---
+
+## DTO to Entity Transformation
+
+- Controllers **MUST** transform DTOs into entities before invoking services.
+- Transformation **MUST** be performed using `class-transformer`.
+- Manual property mapping **MUST NOT** be used.
+
+---
+
+## CRUD Endpoint Standards
+
+### General Rules
+
+- Each controller **MUST** expose standard CRUD endpoints.
+- Each endpoint **MUST**:
+  - Use the correct HTTP verb
+  - Delegate logic to the service layer
+  - Return the service result directly
+
+---
+
+### Required CRUD Endpoints
+
+- Retrieve all resources
+  - HTTP verb: `GET`
+  - Route: base route
+- Retrieve a resource by identifier
+  - HTTP verb: `GET`
+  - Route: `/:id`
+- Create a resource
+  - HTTP verb: `POST`
+  - Route: base route
+- Update a resource by identifier
+  - HTTP verb: `PUT`
+  - Route: `/:id`
+- Delete a resource by identifier
+  - HTTP verb: `DELETE`
+  - Route: `/:id`
+
+---
+
+## HTTP Response Codes
+
+- `POST` operations **MUST** return `201 CREATED`.
+- `DELETE` operations **MUST** return `204 NO_CONTENT`.
+- Explicit HTTP status codes **MUST** be set using decorators when deviating from defaults.
+
+---
+
+## Parameter Binding
+
+- URL parameters **MUST** be extracted using `@Param`.
+- Request bodies **MUST** be extracted using `@Body`.
+- Controllers **MUST NOT** perform manual request parsing.
+
+---
+
+## Association Controllers
+
+### Association Controller Definition
+
+- Each entity association **MUST** have a dedicated controller.
+- Association controllers **MUST** be created using the NestJS CLI.
+- Association controllers **MUST** use the same base route as the owning entity.
+
+### Required command
+
+nest g co <entityA>-<entityB> --no-spec
+
+---
+
+## Association Controller Rules
+
+- Association controllers **MUST**:
+  - Inject the association service
+  - Use the business error interceptor
+  - Delegate all logic to the service layer
+
+---
+
+## Association Endpoints
+
+Association controllers **MUST** support the following operations:
+
+- Add an associated entity
+  - HTTP verb: `POST`
+  - Route: `/:ownerId/<related-plural>/:relatedId`
+- Retrieve an associated entity
+  - HTTP verb: `GET`
+  - Route: `/:ownerId/<related-plural>/:relatedId`
+- Retrieve all associated entities
+  - HTTP verb: `GET`
+  - Route: `/:ownerId/<related-plural>`
+- Replace all associated entities
+  - HTTP verb: `PUT`
+  - Route: `/:ownerId/<related-plural>`
+- Remove an associated entity
+  - HTTP verb: `DELETE`
+  - Route: `/:ownerId/<related-plural>/:relatedId`
+
+---
+
+## Association Payload Rules
+
+- Bulk association updates **MUST** receive DTO arrays.
+- DTO arrays **MUST** be transformed into entity arrays before service invocation.
+- Partial association updates **MUST NOT** be performed.
+
+---
+
+## Controller Restrictions
+
+- Controllers **MUST NOT**:
+  - Contain business logic
+  - Access repositories
+  - Handle persistence directly
+- Controllers **MUST ONLY**:
+  - Validate input
+  - Transform DTOs
+  - Delegate to services

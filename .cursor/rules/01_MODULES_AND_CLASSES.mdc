@@ -1,0 +1,93 @@
+---
+description: "Standards for defining backend modules and domain entities in NestJS"
+alwaysApply: false
+---
+
+# Modules and Classes Rules
+
+## Module Definition
+
+- Each API resource **MUST** be defined as an independent NestJS module.
+- A module **MUST NOT** represent more than one resource.
+- Modules **MUST** be created exclusively using the NestJS CLI.
+
+### Required command
+
+nest g mo <resource-name>
+
+### Required structure
+- `src/<resource-name>/`
+- `src/<resource-name>/<resource-name>.module.ts`
+
+---
+
+## Domain Entity Definition
+
+- Each resource module **MUST** define exactly one primary domain entity.
+- The domain entity **MUST** be colocated within the module folder.
+- The entity file **MUST** be named `<resource-name>.entity.ts`.
+- Entities **MUST** be created using the NestJS CLI without test files.
+
+### Required command
+
+nest g cl <resource-name>/<resource-name>.entity --no-spec
+
+---
+
+## Persistence Standards
+
+- TypeORM **MUST** be used as the ORM for persistent entities.
+- Every persistent domain class **MUST** be annotated with `@Entity()`.
+
+---
+
+## Entity Identifier
+
+- Every entity **MUST** define an `id` field.
+- The `id` field **MUST**:
+  - Be the primary key
+  - Be auto-generated
+  - Use UUID as its identifier type
+
+---
+
+## Primitive Attributes
+
+- All primitive attributes **MUST**:
+  - Be declared as class properties
+  - Be annotated with `@Column()`
+- Domain entities **MUST NOT** contain business logic.
+
+---
+
+## Entity Relationships
+
+- All relationships **MUST** be declared explicitly using TypeORM annotations.
+- Relationships **MUST** be defined inside `*.entity.ts` files only.
+
+### One-to-Many Relationships
+
+- `@OneToMany` **MUST** be used on the owning entity.
+- The related property **MUST** be an array.
+- The inverse side **MUST** be defined using `@ManyToOne`.
+
+- The entity declaring `@OneToMany` **IS** the owner of the relationship.
+- Relationship mutations **MUST** be performed from the owning entity.
+
+---
+
+## Naming Conventions
+
+- Module names **MUST** match the resource name in singular form.
+- Collection relationship properties **MUST** be plural.
+- Inverse relationship properties **MUST** be singular.
+
+---
+
+## Entity Restrictions
+
+- Entities **MUST NOT**:
+  - Access services
+  - Access repositories
+  - Access controllers
+- Entities **MUST ONLY** model data structure and relationships.
