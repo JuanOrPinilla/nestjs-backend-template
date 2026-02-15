@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,6 +14,7 @@ console.log('DB_NAME:', process.env.DB_NAME);
 
 @Module({
   imports: [
+<<<<<<< HEAD
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -25,6 +27,22 @@ console.log('DB_NAME:', process.env.DB_NAME);
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true,
+=======
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: config.get<'postgres'>('DB_TYPE'),
+        host: config.get<string>('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get<string>('DB_USERNAME'),
+        password: config.get<string>('DB_PASSWORD'),
+        database: config.get<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: true, // solo dev
+      }),
+>>>>>>> be6395da3b428800f157f7880ddbff6dfc4348fb
     }),
   ],
   controllers: [AppController],
